@@ -10,6 +10,10 @@ const C = {
 const fract = (n: number) => n - Math.floor(n);
 const noise = (n: number) => fract(Math.sin(n * 127.1 + 311.7) * 43758.5453);
 
+// 轨道与实体共享同一组几何基准，轮底接触下侧钢轨，避免各自偏移。
+const TRACK = { firstLane: 0.58, laneGap: 0.147, farRail: 5, nearRail: 31 };
+const WHEEL = { top: 3, height: 5 };
+
 /** 世界只消费状态，不参与规则计算；所有坐标随画布缩放。 */
 export class WorldRenderer {
   private ctx: CanvasRenderingContext2D;
@@ -29,6 +33,19 @@ export class WorldRenderer {
     this.canvas.height = Math.round(height * this.ratio);
   }
 
+  private laneY(lane: number) {
+    return this.height * (TRACK.firstLane + lane * TRACK.laneGap);
+  }
+
+  private lowerRailY(lane: number) {
+    return this.laneY(lane) + TRACK.nearRail;
+  }
+
+  private trainY(lane: number) {
+    // lane 可以是变轨中的小数，接触点会随列车连续移动。
+    return this.lowerRailY(lane) - WHEEL.top - WHEEL.height;
+  }
+
   render(s: GameState, clock: number, reducedMotion: boolean) {
     const c = this.ctx,
       w = this.width,
@@ -45,20 +62,17 @@ export class WorldRenderer {
     this.city(s);
     this.rails(s);
     if (s.phase !== "READY") this.sightline(s);
-    const laneY = (lane: number) => h * (0.58 + lane * 0.147);
-
     // 轨道按远近绘制，避免下轨实体被上轨列车覆盖。
     for (let lane = 0; lane < 3; lane++) {
       for (const wave of s.waves) {
-        if (!wave.passed) this.signal(wave, lane, laneY(lane), s, clock);
         if (wave.blocked.includes(lane) && wave.x < 1.2)
-          this.obstacle(wave, laneY(lane));
+          this.obstacle(wave, lane);
       }
       const currentLane = Math.round(s.train.laneY);
       if (currentLane === lane) {
         const ready = s.phase === "READY";
         const x = ready ? w * 0.69 : s.train.screenX * w;
-        const y = ready ? laneY(1) : laneY(s.train.laneY);
+        const y = this.trainY(ready ? 1 : s.train.laneY);
         this.train(
           x,
           y,
@@ -71,6 +85,12 @@ export class WorldRenderer {
     }
     this.foreground(s);
     if (!reducedMotion) this.speedLines(s, clock);
+    // 信号是决策信息，最后绘制，避免被前景电线杆和速度线遮挡。
+    for (const wave of s.waves) {
+      if (!wave.passed) {
+        for (let lane = 0; lane < 3; lane++) this.signal(wave, lane, s, clock);
+      }
+    }
     c.restore();
     const vignette = c.createLinearGradient(0, 0, 0, h);
     vignette.addColorStop(0, "#04111000");
@@ -172,7 +192,7 @@ export class WorldRenderer {
     c.fillStyle = "#112422";
     c.fillRect(0, h * 0.53, w, h);
     for (let lane = 0; lane < 3; lane++) {
-      const y = h * (0.58 + lane * 0.147);
+      const y = this.laneY(lane);
       c.fillStyle = lane === 1 ? "#172d29" : "#142925";
       c.fillRect(0, y - 13, w, h * 0.11);
       const shift = (s.scroll * w) % 39;
@@ -184,7 +204,7 @@ export class WorldRenderer {
         c.lineTo(x - shift + 8, y + 40);
       }
       c.stroke();
-      for (const dy of [5, 31]) {
+      for (const dy of [TRACK.farRail, TRACK.nearRail]) {
         c.fillStyle = "#081b19";
         c.fillRect(0, y + dy, w, 7);
         c.fillStyle = "#577469";
@@ -296,7 +316,8 @@ export class WorldRenderer {
       c.stroke();
     }
     c.fillStyle = "#0c201c";
-    for (let dx = 33; dx < length; dx += 53) c.fillRect(-dx, 3, 20, 5);
+    for (let dx = 33; dx < length; dx += 53)
+      c.fillRect(-dx, WHEEL.top, 20, WHEEL.height);
     c.fillStyle = "#edfbdc";
     c.shadowColor = "#d9f6b4";
     c.shadowBlur = 13;
@@ -330,19 +351,22 @@ export class WorldRenderer {
     c.restore();
   }
 
-  private signal(
-    wave: Wave,
-    lane: number,
-    y: number,
-    s: GameState,
-    clock: number,
-  ) {
+  private signal(wave: Wave, lane: number, s: GameState, clock: number) {
     const c = this.ctx,
       w = this.width;
-    // 信号位于实体前方；实体尚在屏外时，边缘信号仍给出完整预告。
+    const compact = w < 600;
+    const width = compact ? 96 : 126;
+    const upperRail = this.laneY(lane) + TRACK.farRail;
+    const lowerRail = this.lowerRailY(lane);
+    const y = (upperRail + lowerRail) / 2;
+    // 灯牌位于所属轨道的两根钢轨之间，并始终留在车头前方的可视区域。
+    // 窄屏缩短文字、保留轨道名，避免信号越界或压住车头。
     const x = Math.min(
-      w - 42,
-      Math.max(24, (wave.x - RULES.signalLead * 0.34) * w),
+      w - width / 2 - 10,
+      Math.max(
+        s.train.screenX * w + width / 2 + 10,
+        (wave.x - RULES.signalLead * 0.34) * w,
+      ),
     );
     if (wave.x < s.train.screenX - 0.04) return;
     const blocked = wave.blocked.includes(lane);
@@ -351,51 +375,58 @@ export class WorldRenderer {
         ? C.amber
         : C.red
       : C.mint;
-    c.fillStyle = "#132b25";
-    c.fillRect(x - 2, y - 65, 4, 67);
-    c.fillStyle = "#081814";
-    c.strokeStyle = "#527465";
+    const status = blocked
+      ? wave.kind === "train"
+        ? "慢车"
+        : wave.kind === "debris"
+          ? "异物"
+          : "封闭"
+      : "畅通";
+    const left = x - width / 2;
+    c.save();
+    // 彩色钢轨短线与灯牌直接相接，明确指出受控的是当前这一条轨道。
+    c.strokeStyle = `${color}a6`;
+    c.lineWidth = 2;
+    c.beginPath();
+    c.moveTo(left - 12, lowerRail);
+    c.lineTo(left + width + 12, lowerRail);
+    c.stroke();
+    c.fillStyle = "#081814f5";
     c.lineWidth = 1;
     c.beginPath();
-    c.roundRect(x - 12, y - 74, 24, 39, 6);
+    c.roundRect(left, upperRail, width, lowerRail - upperRail, 5);
     c.fill();
     c.stroke();
     c.fillStyle = color;
     c.shadowColor = color;
-    c.shadowBlur = 12 + Math.sin(clock * 4) * 3;
+    c.shadowBlur = 8 + Math.sin(clock * 4) * 2;
     c.beginPath();
-    c.arc(x, y - 59, 4, 0, Math.PI * 2);
+    c.arc(left + 12, y, 4, 0, Math.PI * 2);
     c.fill();
     c.shadowBlur = 0;
     c.fillStyle = color;
-    c.font = "bold 12px sans-serif";
-    c.textAlign = "center";
-    c.fillText(blocked ? "×" : "↑", x, y - 40);
-    c.fillStyle = "#081a17e8";
-    c.fillRect(x - 35, y - 96, 70, 17);
-    c.fillStyle = color;
-    c.font = "10px sans-serif";
-    c.fillText(
-      blocked
-        ? wave.kind === "train"
-          ? "慢车"
-          : wave.kind === "debris"
-            ? "异物"
-            : "封闭"
-        : `${LANE_NAMES[lane]}畅通`,
-      x,
-      y - 84,
-    );
+    c.font = `${compact ? 11 : 12}px sans-serif`;
     c.textAlign = "left";
+    c.textBaseline = "middle";
+    c.fillText(
+      compact
+        ? `${LANE_NAMES[lane]}·${status}`
+        : `0${lane + 1} ${LANE_NAMES[lane]} · ${status}`,
+      left + 24,
+      y,
+    );
+    c.restore();
   }
 
-  private obstacle(wave: Wave, y: number) {
+  private obstacle(wave: Wave, lane: number) {
     const c = this.ctx,
       x = wave.x * this.width;
     if (wave.kind === "train") {
-      this.train(x + 145, y, 145, 34, true);
+      this.train(x + 145, this.trainY(lane), 145, 34, true);
       return;
     }
+    // 各实体以实际底部落在同一根钢轨上，施工栏底部为 13，落石为 8。
+    const y = this.lowerRailY(lane) - (wave.kind === "debris" ? 8 : 13);
     c.save();
     c.translate(x, y);
     c.fillStyle = "#020d0b66";
