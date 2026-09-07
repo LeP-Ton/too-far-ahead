@@ -15,3 +15,4 @@
 - `workflow/20260907222816-session-4-rail-signal-alignment.md` - 会话-4：列车、慢车与障碍对齐下侧钢轨，信号灯改为所属轨道内的灯牌；包含完整逐行 diff、桌面与窄屏视觉验证及回溯基准。
 - `workflow/20260907224158-session-5-physical-traffic-lights.md` - 会话-5：将状态灯牌重绘为红黄绿三灯实体信号灯，增加灯罩、支杆和轨道铭牌；包含完整 diff、三种屏幕尺寸的视觉验证与回溯基准。
 - `workflow/20260907225351-session-7-fixed-track-signals.md` - 会话-7：移除信号灯跟随车头与边界吸附，恢复随场景经过和离屏；包含完整 diff、车头位置解耦与通过后离屏的视觉验证。
+- `workflow/20260908073703-session-8-long-train-design.md` - 会话-8：重绘流线车头和独立车厢，改为至少八节且覆盖画面 120% 的长编组；包含完整 diff、屏幕右侧车尾边界与多尺寸视觉验证。
