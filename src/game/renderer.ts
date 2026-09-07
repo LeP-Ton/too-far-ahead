@@ -354,67 +354,102 @@ export class WorldRenderer {
   private signal(wave: Wave, lane: number, s: GameState, clock: number) {
     const c = this.ctx,
       w = this.width;
-    const compact = w < 600;
-    const width = compact ? 96 : 126;
-    const upperRail = this.laneY(lane) + TRACK.farRail;
-    const lowerRail = this.lowerRailY(lane);
-    const y = (upperRail + lowerRail) / 2;
-    // 灯牌位于所属轨道的两根钢轨之间，并始终留在车头前方的可视区域。
-    // 窄屏缩短文字、保留轨道名，避免信号越界或压住车头。
+    // 整根灯柱收在自己的轨道间距内，顶部与上一条轨道留出空隙。
+    const scale = Math.min(1, (this.height * TRACK.laneGap - 8) / 86);
+    const halfWidth = 24 * scale;
     const x = Math.min(
-      w - width / 2 - 10,
+      w - halfWidth - 10,
       Math.max(
-        s.train.screenX * w + width / 2 + 10,
+        s.train.screenX * w + halfWidth + 14,
         (wave.x - RULES.signalLead * 0.34) * w,
       ),
     );
     if (wave.x < s.train.screenX - 0.04) return;
     const blocked = wave.blocked.includes(lane);
-    const color = blocked
+    // 三个灯位固定为上红、中黄、下绿，同一时刻只点亮当前状态。
+    const active = blocked
       ? wave.kind === "debris" || wave.kind === "train"
-        ? C.amber
-        : C.red
-      : C.mint;
-    const status = blocked
-      ? wave.kind === "train"
-        ? "慢车"
-        : wave.kind === "debris"
-          ? "异物"
-          : "封闭"
-      : "畅通";
-    const left = x - width / 2;
+        ? 1
+        : 0
+      : 2;
+    const colors = [C.red, C.amber, C.mint];
+    const unlit = ["#452824", "#423922", "#283e2b"];
     c.save();
-    // 彩色钢轨短线与灯牌直接相接，明确指出受控的是当前这一条轨道。
-    c.strokeStyle = `${color}a6`;
+    c.translate(x, this.lowerRailY(lane));
+    c.scale(scale, scale);
+
+    // 底座直接压在所属轨道的下侧钢轨上，短色线加强落点的对应关系。
+    c.strokeStyle = `${colors[active]}99`;
     c.lineWidth = 2;
     c.beginPath();
-    c.moveTo(left - 12, lowerRail);
-    c.lineTo(left + width + 12, lowerRail);
+    c.moveTo(-24, 0);
+    c.lineTo(24, 0);
     c.stroke();
-    c.fillStyle = "#081814f5";
+    const metal = c.createLinearGradient(-3, 0, 3, 0);
+    metal.addColorStop(0, "#344b41");
+    metal.addColorStop(0.5, "#8a9b80");
+    metal.addColorStop(1, "#3c5548");
+    c.fillStyle = metal;
+    c.fillRect(-3, -25, 6, 23);
+    c.fillStyle = "#667c65";
+    c.fillRect(-11, -3, 22, 3);
+
+    // 背板、金属灯壳与独立遮光檐保留实体铁路信号灯的轮廓。
+    c.fillStyle = "#071310";
+    c.strokeStyle = "#415d4e";
     c.lineWidth = 1;
     c.beginPath();
-    c.roundRect(left, upperRail, width, lowerRail - upperRail, 5);
+    c.roundRect(-18, -85, 36, 66, 10);
     c.fill();
     c.stroke();
-    c.fillStyle = color;
-    c.shadowColor = color;
-    c.shadowBlur = 8 + Math.sin(clock * 4) * 2;
+    const housing = c.createLinearGradient(-15, 0, 15, 0);
+    housing.addColorStop(0, "#34453a");
+    housing.addColorStop(0.35, "#17291f");
+    housing.addColorStop(1, "#253c2e");
+    c.fillStyle = housing;
+    c.strokeStyle = "#71846b";
     c.beginPath();
-    c.arc(left + 12, y, 4, 0, Math.PI * 2);
+    c.roundRect(-14, -81, 28, 58, 7);
     c.fill();
-    c.shadowBlur = 0;
-    c.fillStyle = color;
-    c.font = `${compact ? 11 : 12}px sans-serif`;
-    c.textAlign = "left";
+    c.stroke();
+    for (let light = 0; light < 3; light++) {
+      const y = -70 + light * 18;
+      const lit = light === active;
+      c.fillStyle = "#060e0a";
+      c.beginPath();
+      c.arc(0, y, 9, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = lit ? colors[light] : unlit[light];
+      c.shadowColor = colors[light];
+      c.shadowBlur = lit ? 10 + Math.sin(clock * 4) * 1.5 : 0;
+      c.beginPath();
+      c.arc(0, y, 6.2, 0, Math.PI * 2);
+      c.fill();
+      c.shadowBlur = 0;
+      if (lit) {
+        c.fillStyle = "#f6ffdcbb";
+        c.beginPath();
+        c.ellipse(-1.5, y - 2, 2.5, 1.6, -0.35, 0, Math.PI * 2);
+        c.fill();
+      }
+      c.strokeStyle = "#809078";
+      c.lineWidth = 1.2;
+      c.beginPath();
+      c.arc(0, y - 1, 8.5, Math.PI * 1.08, Math.PI * 1.92);
+      c.stroke();
+    }
+
+    // 铭牌在矮画布中单独放大一些，避免随灯柱一起缩成难辨的文字。
+    c.translate(0, -5);
+    const plaqueScale = Math.min(1 / scale, 1.45);
+    c.scale(plaqueScale, plaqueScale);
+    c.fillStyle = "#b8c8a5";
+    c.fillRect(-16, -12, 32, 12);
+    c.fillStyle = "#20382a";
+    c.font = "bold 10px sans-serif";
+    c.textAlign = "center";
     c.textBaseline = "middle";
-    c.fillText(
-      compact
-        ? `${LANE_NAMES[lane]}·${status}`
-        : `0${lane + 1} ${LANE_NAMES[lane]} · ${status}`,
-      left + 24,
-      y,
-    );
+    c.fillText(LANE_NAMES[lane], 0, -5.5);
     c.restore();
   }
 

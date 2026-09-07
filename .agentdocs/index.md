@@ -13,3 +13,4 @@
 - `workflow/20260907161233-session-2-github-pages.md` - 会话-2：初始化 Git、保存初版并准备 GitHub Pages 发布；包含资源子路径配置、官方 Actions 工作流、逐行 diff 和发布受限说明。
 - `workflow/20260907164532-session-3-public-pages-release.md` - 会话-3：公开源码、启用 Pages 并完成发布；包含授权记录、线上网址、成功部署与 HTTP 验证结果，以及发布文档的完整 diff。
 - `workflow/20260907222816-session-4-rail-signal-alignment.md` - 会话-4：列车、慢车与障碍对齐下侧钢轨，信号灯改为所属轨道内的灯牌；包含完整逐行 diff、桌面与窄屏视觉验证及回溯基准。
+- `workflow/20260907224158-session-5-physical-traffic-lights.md` - 会话-5：将状态灯牌重绘为红黄绿三灯实体信号灯，增加灯罩、支杆和轨道铭牌；包含完整 diff、三种屏幕尺寸的视觉验证与回溯基准。
