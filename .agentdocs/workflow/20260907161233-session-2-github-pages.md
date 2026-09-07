@@ -12,8 +12,15 @@
 - [x] 配置 main 分支上的测试、构建、Pages 发布工作流。
 - [x] 核验 GitHub 官方 Actions 当前发行版本。
 - [x] 完成 14 项规则测试、严格 TypeScript 检查、Pages 生产构建和资源路径检查。
-- [ ] 推送远端并确认提交 SHA；首次 Git 网络连接超时，正在恢复连接。
+- [x] 推送远端并确认提交 SHA；通过 GitHub API 完成上传，本地与远端提交哈希一致。
 - [ ] 启用 Pages、完成部署并核验线上网页。
+
+## 远端提交核验
+- 初版：`121a1299c3be261aa6063fdaff96703e8f37f591`。
+- Pages 配置：`9d79ab0e6926f45090707c3255ed3ea8306e656e`。
+- 仓库默认分支为 main，私有可见性已经由 GitHub API 确认。
+- HTTPS Git 通道连接超时，SSH 没有可用的账号密钥；改用 GitHub Git Database API，逐一验证文件树与提交哈希。仅替换本轮空仓库的临时初始化引用，远端最终历史与本地完全一致。
+- Actions 已被触发：[首次发布流程](https://github.com/LeP-Ton/too-far-ahead/actions/runs/34101269531)。Pages 仍受下述可见性和账户方案限制。
 
 ## 发布限制与用户确认边界
 - 自动审批拒绝“创建公开仓库并推送全部源码”：其认为提交 GitHub / 发布 Pages 的原始授权尚未明确包含公开源码。
