@@ -6,5 +6,8 @@
 - 会话-1 从空目录初始化；初始目录没有 Git 仓库。开发服务使用终端打印的地址，本次为 http://127.0.0.1:5174/。
 - React + TypeScript + Canvas；测试使用 Node 内置运行器，当前 14 项通过，含 60 个随机种子的完整通关模拟。
 
+- 会话-2 已建立 `main` 分支，初版提交为 `121a129`；仓库 `LeP-Ton/too-far-ahead` 当前为私有，Pages 尚未启用。
+
 ## 当前变更文档
 - `workflow/20260907154944-session-1-playable-game.md` - 会话-1：初始化可玩的完整游戏；包含全部源文件和依赖锁文件的逐行 diff、玩法配置、验证方法与会话回溯说明。需要了解本版实现、数值或回到本版时读取。
+- `workflow/20260907161233-session-2-github-pages.md` - 会话-2：初始化 Git、保存初版并准备 GitHub Pages 发布；包含资源子路径配置、官方 Actions 工作流、逐行 diff 和发布受限说明。

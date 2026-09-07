@@ -2,6 +2,8 @@
 
 横版高铁高速反应跑酷。每次系统喊出“遥遥领先”，基础速度提升 20 km/h，车头向右推进 10%，前方判断空间随之缩小。
 
+[Pages 地址（待启用）](https://lep-ton.github.io/too-far-ahead/) · [GitHub 仓库](https://github.com/LeP-Ton/too-far-ahead)
+
 ## 启动
 
 需要 Node.js 20.19+。
@@ -19,6 +21,20 @@ npm run lint
 npm run build
 npm run preview
 ```
+
+## GitHub Pages 发布
+
+- `.github/workflows/deploy-pages.yml` 在推送 `main` 后自动测试、构建并发布，也支持在 Actions 页面手动触发。
+- 仓库 Settings → Pages 的发布来源为 GitHub Actions。
+- 工作流通过 `VITE_BASE_PATH=/too-far-ahead/` 配置资源前缀；普通本地启动仍使用根路径。
+- 若要在本地验证相同的 Pages 产物：
+
+```bash
+VITE_BASE_PATH=/too-far-ahead/ npm run build
+npm run preview -- --base=/too-far-ahead/
+```
+
+访问预览服务的 `/too-far-ahead/` 路径。玩法初版快照为提交 `121a129`。
 
 ## 操作与目标
 

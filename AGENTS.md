@@ -3,6 +3,7 @@
 ## 基本信息
 - 《遥遥领先》（Too Far Ahead）是一个横版高铁反应跑酷游戏；核心压力来自自动提速和车头向右推进，前方判断空间同步缩小。
 - 项目从空目录初始化，初始目录不是 Git 仓库。每轮开始检查分支；若与已知上轮分支不同，先告知用户并确认。
+- 会话-2 初始化 Git，默认分支为 `main`；GitHub 仓库为 `LeP-Ton/too-far-ahead`，通过 GitHub Actions 自动发布到 GitHub Pages。
 - 沟通、文档和代码注释使用中文；回答以“会话-${index}：”开头。
 
 ## 技术与架构
@@ -16,6 +17,7 @@
 ## 运行方式
 - `npm install` 安装依赖；`npm run dev` 启动；`npm run build` 检查类型并构建。
 - `npm test` 使用 Node 内置测试运行器与 tsx 验证核心玩法；`npm run lint` 执行严格 TypeScript 静态检查。
+- 推送 `main` 会先验证规则、静态检查并构建，再发布 `dist`；`VITE_BASE_PATH` 配置 Pages 仓库子路径，本地默认 `/`。
 
 ## 检索与记录
 - 项目检索先读取 `.agentdocs/index.md`，再按需读取其中关联的具体文档，禁止直接全量检索 `.agentdocs/workflow/`。
