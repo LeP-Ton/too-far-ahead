@@ -87,9 +87,8 @@ export class WorldRenderer {
     if (!reducedMotion) this.speedLines(s, clock);
     // 信号是决策信息，最后绘制，避免被前景电线杆和速度线遮挡。
     for (const wave of s.waves) {
-      if (!wave.passed) {
-        for (let lane = 0; lane < 3; lane++) this.signal(wave, lane, s, clock);
-      }
+      // 已通过的信号仍留在轨旁，直到随场景移出画面。
+      for (let lane = 0; lane < 3; lane++) this.signal(wave, lane, clock);
     }
     c.restore();
     const vignette = c.createLinearGradient(0, 0, 0, h);
@@ -351,20 +350,16 @@ export class WorldRenderer {
     c.restore();
   }
 
-  private signal(wave: Wave, lane: number, s: GameState, clock: number) {
+  private signal(wave: Wave, lane: number, clock: number) {
     const c = this.ctx,
       w = this.width;
     // 整根灯柱收在自己的轨道间距内，顶部与上一条轨道留出空隙。
     const scale = Math.min(1, (this.height * TRACK.laneGap - 8) / 86);
     const halfWidth = 24 * scale;
-    const x = Math.min(
-      w - halfWidth - 10,
-      Math.max(
-        s.train.screenX * w + halfWidth + 14,
-        (wave.x - RULES.signalLead * 0.34) * w,
-      ),
-    );
-    if (wave.x < s.train.screenX - 0.04) return;
+    // 信号固定在对应障碍前方，与场景同速移动，不受车头位置或视口边缘牵引。
+    const x = (wave.x - RULES.signalLead * 0.34) * w;
+    // 完整移出画面后才停止绘制，经过车头或已通过障碍都不改变实体位置。
+    if (x + halfWidth < 0 || x - halfWidth > w) return;
     const blocked = wave.blocked.includes(lane);
     // 三个灯位固定为上红、中黄、下绿，同一时刻只点亮当前状态。
     const active = blocked
