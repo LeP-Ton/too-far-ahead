@@ -3,7 +3,7 @@
 ## 基本信息
 - 《遥遥领先》（Too Far Ahead）是一个横版高铁反应跑酷游戏；核心压力来自自动提速和车头向右推进，前方判断空间同步缩小。
 - 项目从空目录初始化，初始目录不是 Git 仓库。每轮开始检查分支；若与已知上轮分支不同，先告知用户并确认。
-- 会话-2 初始化 Git，默认分支为 `main`；GitHub 仓库为 `LeP-Ton/too-far-ahead`，通过 GitHub Actions 自动发布到 GitHub Pages。
+- 会话-2 初始化 Git，默认分支为 `main`；GitHub 公开源码仓库为 `LeP-Ton/too-far-ahead`，通过 GitHub Actions 自动发布到 GitHub Pages，正式网址为 `https://lep-ton.github.io/too-far-ahead/`。
 - 沟通、文档和代码注释使用中文；回答以“会话-${index}：”开头。
 
 ## 技术与架构

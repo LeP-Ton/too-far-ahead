@@ -2,7 +2,7 @@
 
 横版高铁高速反应跑酷。每次系统喊出“遥遥领先”，基础速度提升 20 km/h，车头向右推进 10%，前方判断空间随之缩小。
 
-[Pages 地址（待启用）](https://lep-ton.github.io/too-far-ahead/) · [GitHub 仓库](https://github.com/LeP-Ton/too-far-ahead)
+[在线游玩](https://lep-ton.github.io/too-far-ahead/) · [GitHub 仓库](https://github.com/LeP-Ton/too-far-ahead)
 
 ## 启动
 
